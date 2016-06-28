@@ -14,6 +14,7 @@ class AuthController extends Controller
 
     public function getLogin()
     {
+        // for test
         $rules = array(
             'username' => 'required', // make sure the email is an actual email
             'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
@@ -35,9 +36,10 @@ class AuthController extends Controller
 
             if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
                 $userId = Auth::user()->id;
-                Auth::loginUsingId($userId);
+//                Auth::loginUsingId($userId);
                 $data = [
                     'name' => Auth::user()->name ,
+                    'id' => $userId
                 ];
                 return BF::result(true, ['action' => 'create', 'data' => $data]);
             } else {
@@ -46,11 +48,50 @@ class AuthController extends Controller
         }
     }
 
+
     public function getTest(){
         $data = [];
+        $userId = Input::get('userid') ;
+        Auth::loginUsingId($userId);
         $data["created_by"] = Auth::user()->name ;
-        dd($data);
+        return BF::result(true, ['action' => 'create', 'data' => $data]);
     }
+
+    public function postLogin()
+    {
+        $rules = array(
+            'username' => 'required', // make sure the email is an actual email
+            'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
+        );
+
+        $validator = Validator::make(Input::all(), $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        } else {
+
+            $username = Input::get('username') ;
+            $password = Input::get('password') ;
+
+            if (!preg_match("/@/", $username)) {
+                $search_column = 'name';
+            } else {
+                $search_column = 'email';
+            }
+
+            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
+                $userId = Auth::user()->id;
+//                Auth::loginUsingId($userId);
+                $data = [
+                    'name' => Auth::user()->name ,
+                    'id' => $userId
+                ];
+                return BF::result(true, ['action' => 'create', 'data' => $data]);
+            } else {
+                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
+            }
+        }
+    }
+
 
     public function getLogout()
     {
