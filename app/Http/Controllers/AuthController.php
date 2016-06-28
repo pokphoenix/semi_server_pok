@@ -15,17 +15,13 @@ class AuthController extends Controller
     public function getLogin()
     {
         $rules = array(
-            'username'    => 'required', // make sure the email is an actual email
+            'username' => 'required', // make sure the email is an actual email
             'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
         );
 
-
-
-
         $validator = Validator::make(Input::all(), $rules);
-        dd($validator);
         if ($validator->fails()) {
-            return BF::result(false, $validator);
+            return BF::result(false, $validator->messages()->first());
         } else {
 
             $username = Input::get('username') ;
@@ -40,18 +36,20 @@ class AuthController extends Controller
             if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
                 $userId = Auth::user()->id;
                 Auth::loginUsingId($userId);
-
                 $data = [
                     'name' => Auth::user()->name ,
                 ];
-
                 return BF::result(true, ['action' => 'create', 'data' => $data]);
-
             } else {
                 return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
             }
-
         }
+    }
+
+    public function getTest(){
+        $data = [];
+        $data["created_by"] = Auth::user()->name ;
+        dd($data);
     }
 
     public function getLogout()
