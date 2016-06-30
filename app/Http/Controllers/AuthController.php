@@ -4,36 +4,37 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests;
 use App\User;
+use Carbon\Carbon;
 use Input;
 use BF;
 use Validator;
 use Auth;
+use Session;
+use Tymon\JWTAuth\Exceptions\JWTException;
+use \Tymon\JWTAuth\Facades\JWTAuth as JWTAuth;
+use \Firebase\JWT\JWT;
+use Illuminate\Http\Request;
 
 class AuthController extends Controller
 {
 
     public function getLogin()
     {
-        // for test
         $rules = array(
-            'username' => 'required', // make sure the email is an actual email
+            'username' => 'required',
             'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
         );
-
         $validator = Validator::make(Input::all(), $rules);
         if ($validator->fails()) {
             return BF::result(false, $validator->messages()->first());
         } else {
-
             $username = Input::get('username') ;
             $password = Input::get('password') ;
-
             if (!preg_match("/@/", $username)) {
                 $search_column = 'name';
             } else {
                 $search_column = 'email';
             }
-
             if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
                 $userId = Auth::user()->id;
 //                Auth::loginUsingId($userId);
@@ -47,160 +48,179 @@ class AuthController extends Controller
             }
         }
     }
-
 
     public function getTest(){
-        $data = [];
-        $userId = Input::get('userid') ;
-        Auth::loginUsingId($userId);
-        $data["created_by"] = Auth::user()->name ;
-        return BF::result(true, ['action' => 'create', 'data' => $data]);
-    }
+//        $input = Input::all() ;
+//        $rules = array(
+//            'userid' => 'required|Numeric'
+//        );
+//        $validator = Validator::make($input, $rules);
+//        if ($validator->fails()) {
+//            return BF::result(false, $validator->messages()->first());
+//        } else {
+//            $data = [];
+//            $auth = BF::authLoginFail($input);
+//            if($auth) {
+//                return $auth ;
+//            }
+//            $data["created_by"] = Auth::user()->name ;
+//            return BF::result(true, ['action' => 'create', 'data' => $data]);
+//        }
 
-    public function postLogin()
-    {
-        $rules = array(
-            'username' => 'required', // make sure the email is an actual email
-            'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
+        if (starts_with(Request::root(), 'http://'))
+        {
+            $domain = substr (Request::root(), 7); // $domain is now 'www.example.com'
+        }
+
+        $tomorrow = Carbon::now()->addDay();
+
+        return $tomorrow ;
+
+        $token = array(
+            "iss" => $domain,
+            "aud" => $domain,
+            "iat" => $tomorrow,
+            "nbf" => $tomorrow,
+            'name' => Auth::user()->name ,
+            'id' => $userId
         );
 
-        $validator = Validator::make(Input::all(), $rules);
-        if ($validator->fails()) {
-            return BF::result(false, $validator->messages()->first());
-        } else {
-
-            $username = Input::get('username') ;
-            $password = Input::get('password') ;
-
-            if (!preg_match("/@/", $username)) {
-                $search_column = 'name';
-            } else {
-                $search_column = 'email';
-            }
-
-            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
-                $userId = Auth::user()->id;
-//                Auth::loginUsingId($userId);
-                $data = [
-                    'name' => Auth::user()->name ,
-                    'id' => $userId
-                ];
-                return BF::result(true, ['action' => 'create', 'data' => $data]);
-            } else {
-                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
-            }
-        }
     }
-
 
     public function getLogout()
     {
-        // Todo Check User/Pass Here
-
-        // If login correct
-        Auth::logout();
-        Session::flush();
-
-        // Todo return something;
-    }
-
-    public function postChangePass()
-    {
-        $data = Input::all();
-        $chkToken =  BF::checktoken($data['timestamp'],$data['token']) ;
-        if(!$chkToken){
-            return BF::result(false, 'token invalid');
-        }
-
-        if (empty($data['newPassword'])) {
-            return BF::result(false, 'ไม่พบ รหัสผ่าน');
-        }
-        if (empty($data['newPasswordConfirm'])) {
-            return BF::result(false, 'ไม่พบ ยืนยันรหัสผ่าน');
-        }
-        if (empty($data['email'])) {
-            return BF::result(false, 'ไม่พบ อีเมล์');
-        }
-
-        try {
-            if ($data['newPassword'] != $data['newPasswordConfirm']) {
-                return BF::result(false, "กรุณากรอกพาสเวิดให้ตรงกัน");
+        $input = Input::all() ;
+        $rules = array(
+            'userid' => 'required|Numeric'
+        );
+        $validator = Validator::make($input, $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        } else {
+            $data = [];
+            $auth = BF::authLoginFail($input);
+            if($auth) {
+                return $auth ;
             }
-            $data['password'] = $data['newPassword'] ;
-
-            $status = User::where('email', $data['email'])->first();
-            if ($status === NULL) {
-                return BF::result(false, 'ไม่พบ email นี้ในระบบ');
-            }
-            if ($data['oldPassword'] != $status->password) {
-                return BF::result(false, "กรุณากรอก Old Password ให้ถูกต้องค่ะ");
-            }
-            unset($data["oldPassword"]);
-            unset($data["newPassword"]);
-            unset($data["newPasswordConfirm"]);
-            unset($data["timestamp"]);
-            unset($data["token"]);
-            $statusUpdate = User::whereId($status->id)->update($data);
-            if ($statusUpdate === NULL) {
-                return BF::result(false, 'อัพเดทข้อมูลไม่สำเร็จ');
-            }
-            return BF::result(true, ['action' => 'create']);
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() == 23000) {
-                return BF::result(false, "email นี้มีในระบบอยู่แล้วค่ะ");
-            }
-            return BF::result(false, $e->getMessage());
+            Auth::logout();
+            Session::flush();
+            return BF::result(true, ['action' => 'Logout']);
         }
     }
 
-    public function postForgotPass()
+    public function postLogout(Request $request)
     {
-        $data = Input::all();
 
-        $chkToken =  BF::checktoken($data['timestamp'],$data['token']) ;
-        if(!$chkToken){
-            return BF::result(false, 'token invalid');
-        }
-        if (empty($data['email'])) {
-            return BF::result(false, 'ไม่พบ อีเมล์');
-        }
-        try {
+        $token = $this->auth->setRequest($request)->getToken();
+        $user = $this->auth->authenticate($token);
 
-            $data['newPassword'] = User::randomPassword();
-            $data['password'] = sha1($data['newPassword']);
-            $status = User::where('email', $data['email'])->first();
-            if ($status === NULL) {
-                return BF::result(false, 'ไม่พบ email นี้ในระบบ');
+        return "Hello"+$user ;
+
+        $rules = array(
+            'passdata' => 'required|String'
+        );
+        $validator = Validator::make($input, $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        } else {
+            $data = [];
+            $auth = BF::authLoginFail($input);
+            if($auth) {
+                return $auth ;
             }
+            Auth::logout();
+            Session::flush();
+            return BF::result(true, ['action' => 'Logout']);
+        }
+    }
 
-            Mail::send('emails.forgotpassword', ['newpassword' => $data['newPassword']], function ($message) use ($data) {
-                $message->subject('Fotgot Password!');
-                $message->from('app.semicolon@gmail.com', 'Masterpiece Clinic');
-                $message->to($data['email']); // Recipient address
-            });
-
-            if (count(Mail::failures()) > 0) {
-                return BF::result(false, 'ส่งเมล์ไม่สำเร็จ');
+    public function Login(Request $request)
+    {
+        $input = BF::decodeInput($request);
+        $rules = array(
+            'username' => 'required',
+            'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
+        );
+        $validator = Validator::make($input, $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        } else {
+            //---Logic auth with username or email
+            $username = $input['username'] ;
+            $password = $input['password'] ;
+            if (!preg_match("/@/", $username)) {
+                $search_column = 'name';
             } else {
+                $search_column = 'email';
+            }
 
-                unset($data["newPassword"]);
-                unset($data["timestamp"]);
-                unset($data["token"]);
 
-                $statusUpdate = User::whereId($status->id)->update($data);
-                if ($statusUpdate === NULL) {
-                    return BF::result(false, 'อัพเดทข้อมูลไม่สำเร็จ');
+            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
+                $userId = Auth::user()->id;
+//                Auth::loginUsingId($userId);
+
+                $domain = $_SERVER['HTTP_HOST'];
+                $tomorrow = Carbon::now()->timestamp ;
+                $token = array(
+                    "iss" => $domain,
+                    "aud" => $domain,
+                    "iat" => $tomorrow,
+                    "nbf" => $tomorrow,
+                    'name' => Auth::user()->name ,
+                    'id' => $userId
+                );
+
+                $jwt = JWT::encode($token, getenv('APP_KEY'));
+
+                $data = [
+                    "token" => $jwt
+                ];
+
+                return BF::result(true, ['action' => 'create', 'data' => $data ]);
+            } else {
+                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
+            }
+
+            $credentials = [] ;
+            $credentials[$search_column] = $username ;
+            $credentials['password'] = $password ;
+            try{
+                if(! $token = JWTAuth::attempt($credentials)){
+                    return BF::result(false, $this->response->errorUnauthorized() );
                 }
-                return BF::result(true, ['action' => 'update']);
+            } catch (JWTException $ex){
+                return BF::result(false, $this->response->errorInternal() );
             }
 
+            $return = [
+                "token" => compact('token')
+            ] ;
 
-        } catch (\Illuminate\Database\QueryException $e) {
-            if ($e->getCode() == 23000) {
-                return BF::result(false, "email นี้มีในระบบอยู่แล้วค่ะ");
-            }
-            return BF::result(false, $e->getMessage());
+            return BF::result(true, ['action' => 'login', 'data' => $return]);
+
+
+//            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
+//                $userId = Auth::user()->id;
+////                Auth::loginUsingId($userId);
+//                $data = [
+//                    'name' => Auth::user()->name ,
+//                    'id' => $userId
+//                ];
+//
+//                $data = [
+//                    "token" => "1",
+//                    "name" => "test",
+//                    "pass" => "1234",
+//                    "desc" => "Hello World"
+//                ];
+//
+//                $jwt = JWT::encode($data, getenv('APP_KEY'));
+//
+//                return BF::result(true, ['action' => 'create', 'data' => $data]);
+//            } else {
+//                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
+//            }
         }
     }
-
+    
 }

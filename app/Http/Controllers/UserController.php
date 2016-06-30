@@ -31,6 +31,10 @@ class UserController extends Controller
     public function store()
     {
         $data = Input::all();
+        $auth = BF::authLoginFail($data);
+        if($auth) {
+            return $auth ;
+        }
         if ($data["password"] != $data["confirm_password"] ){
             return BF::result(false, 'กรุณากรอกพาสเวิดให้ตรงกันค่ะ!');
         }
@@ -51,7 +55,8 @@ class UserController extends Controller
 
         $data["password"] = bcrypt($data["password"]) ;
         $data = array_diff_key($data, array_flip(['id','_method','deleted_at','deleted_by','updated_at','created_at']));
-        //$data["created_by"] = Session::get('user_id');
+
+        $data["created_by"] = Auth::user()->id ;
         try {
             $status = User::create($data);
             if($status === NULL) {
@@ -95,8 +100,12 @@ class UserController extends Controller
             unset($data["password"]);
         }
         unset($data["change_pass"]);
-
-        $data["updated_by"] = Session::get('user_id');
+        $auth = BF::authLoginFail($data);
+        if($auth) {
+            return $auth ;
+        }
+        $data["updated_by"] = Auth::user()->id ;
+//        $data["updated_by"] = Session::get('user_id');
         try {
             $status = User::whereId($id)->update($data);
             if($status == 1) {

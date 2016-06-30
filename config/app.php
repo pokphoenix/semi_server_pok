@@ -158,7 +158,8 @@ return [
         App\Providers\RouteServiceProvider::class,
 
         App\BaseFunction\BaseFunctionServiceProvider::class,
-
+        Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
+        
     ],
 
     /*
@@ -206,7 +207,8 @@ return [
         'View' => Illuminate\Support\Facades\View::class,
 
         'Input'     => Illuminate\Support\Facades\Input::class,
-
+        'JWTAuth' => Tymon\JWTAuth\Facades\JWTAuth::class,
+        'JWTFactory' => Tymon\JWTAuth\Facades\JWTFactory::class,
     ],
 
 ];

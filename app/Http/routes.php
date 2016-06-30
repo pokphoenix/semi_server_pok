@@ -19,7 +19,13 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+//--- Route ที่ไม่มีการเช็ค auth user
 Route::group(['prefix' => 'api', 'middleware' => []], function () {
+    Route::post('login', 'AuthController@Login');
+});
+
+//--- Route ที่มีการเช็ค auth user
+Route::group(['prefix' => 'api', 'middleware' => ['jwt.auth']], function () {
     Route::controller('auth', 'AuthController');
     Route::resource('user', 'UserController');
     Route::resource('branch', 'BranchController');
@@ -27,4 +33,3 @@ Route::group(['prefix' => 'api', 'middleware' => []], function () {
     Route::resource('role', 'RoleController');
     Route::resource('usertype', 'UserTypeController');
 });
-
