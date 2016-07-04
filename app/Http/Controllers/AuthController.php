@@ -18,38 +18,77 @@ use Illuminate\Http\Request;
 class AuthController extends Controller
 {
 
-    public function getLogin()
-    {
-        $rules = array(
-            'username' => 'required',
-            'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
-        );
-        $validator = Validator::make(Input::all(), $rules);
-        if ($validator->fails()) {
-            return BF::result(false, $validator->messages()->first());
-        } else {
-            $username = Input::get('username') ;
-            $password = Input::get('password') ;
-            if (!preg_match("/@/", $username)) {
-                $search_column = 'name';
-            } else {
-                $search_column = 'email';
-            }
-            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
-                $userId = Auth::user()->id;
-//                Auth::loginUsingId($userId);
-                $data = [
-                    'name' => Auth::user()->name ,
-                    'id' => $userId
-                ];
-                return BF::result(true, ['action' => 'create', 'data' => $data]);
-            } else {
-                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
-            }
-        }
-    }
-
-    public function getTest(){
+//    public function getLogin()
+//    {
+//        $rules = array(
+//            'username' => 'required',
+//            'password' => 'required|alphaNum|min:3' // password can only be alphanumeric and has to be greater than 3 characters
+//        );
+//        $validator = Validator::make(Input::all(), $rules);
+//        if ($validator->fails()) {
+//            return BF::result(false, $validator->messages()->first());
+//        } else {
+//            $username = Input::get('username') ;
+//            $password = Input::get('password') ;
+//            if (!preg_match("/@/", $username)) {
+//                $search_column = 'name';
+//            } else {
+//                $search_column = 'email';
+//            }
+//            if (Auth::attempt([$search_column => $username, 'password' => $password], Input::has('remember'))) {
+//                $userId = Auth::user()->id;
+////                Auth::loginUsingId($userId);
+//                $data = [
+//                    'name' => Auth::user()->name ,
+//                    'id' => $userId
+//                ];
+//                return BF::result(true, ['action' => 'create', 'data' => $data]);
+//            } else {
+//                return BF::result(false, "Error!! Username or Password Incorrect. \nPlease try again.");
+//            }
+//        }
+//    }
+//
+//    public function getTest(){
+////        $input = Input::all() ;
+////        $rules = array(
+////            'userid' => 'required|Numeric'
+////        );
+////        $validator = Validator::make($input, $rules);
+////        if ($validator->fails()) {
+////            return BF::result(false, $validator->messages()->first());
+////        } else {
+////            $data = [];
+////            $auth = BF::authLoginFail($input);
+////            if($auth) {
+////                return $auth ;
+////            }
+////            $data["created_by"] = Auth::user()->name ;
+////            return BF::result(true, ['action' => 'create', 'data' => $data]);
+////        }
+//
+//        if (starts_with(Request::root(), 'http://'))
+//        {
+//            $domain = substr (Request::root(), 7); // $domain is now 'www.example.com'
+//        }
+//
+//        $tomorrow = Carbon::now()->addDay();
+//
+//        return $tomorrow ;
+//
+//        $token = array(
+//            "iss" => $domain,
+//            "aud" => $domain,
+//            "iat" => $tomorrow,
+//            "nbf" => $tomorrow,
+//            'name' => Auth::user()->name ,
+//            'id' => $userId
+//        );
+//
+//    }
+//
+//    public function getLogout()
+//    {
 //        $input = Input::all() ;
 //        $rules = array(
 //            'userid' => 'required|Numeric'
@@ -63,74 +102,36 @@ class AuthController extends Controller
 //            if($auth) {
 //                return $auth ;
 //            }
-//            $data["created_by"] = Auth::user()->name ;
-//            return BF::result(true, ['action' => 'create', 'data' => $data]);
+//            Auth::logout();
+//            Session::flush();
+//            return BF::result(true, ['action' => 'Logout']);
 //        }
-
-        if (starts_with(Request::root(), 'http://'))
-        {
-            $domain = substr (Request::root(), 7); // $domain is now 'www.example.com'
-        }
-
-        $tomorrow = Carbon::now()->addDay();
-
-        return $tomorrow ;
-
-        $token = array(
-            "iss" => $domain,
-            "aud" => $domain,
-            "iat" => $tomorrow,
-            "nbf" => $tomorrow,
-            'name' => Auth::user()->name ,
-            'id' => $userId
-        );
-
-    }
-
-    public function getLogout()
-    {
-        $input = Input::all() ;
-        $rules = array(
-            'userid' => 'required|Numeric'
-        );
-        $validator = Validator::make($input, $rules);
-        if ($validator->fails()) {
-            return BF::result(false, $validator->messages()->first());
-        } else {
-            $data = [];
-            $auth = BF::authLoginFail($input);
-            if($auth) {
-                return $auth ;
-            }
-            Auth::logout();
-            Session::flush();
-            return BF::result(true, ['action' => 'Logout']);
-        }
-    }
+//    }
 
     public function postLogout(Request $request)
     {
+        Auth::logout();
+        Session::flush();
+        return BF::result(true, ['action' => 'Logout']);
+    }
 
-        $token = $this->auth->setRequest($request)->getToken();
-        $user = $this->auth->authenticate($token);
-
-        return "Hello"+$user ;
-
+    public function postChangepass(Request $request)
+    {
+        $input = BF::decodeInput($request);
         $rules = array(
-            'passdata' => 'required|String'
+            'oldPass' => 'required|alphaNum|min:3',
+            'newPass' => 'required|alphaNum|min:3',
+            'confirmPass' => 'required|alphaNum|min:3',
         );
         $validator = Validator::make($input, $rules);
         if ($validator->fails()) {
             return BF::result(false, $validator->messages()->first());
         } else {
             $data = [];
-            $auth = BF::authLoginFail($input);
-            if($auth) {
-                return $auth ;
-            }
-            Auth::logout();
-            Session::flush();
-            return BF::result(true, ['action' => 'Logout']);
+            $data['oldPass'] = $input['oldPass'] ;
+            $data['newPass'] = $input['newPass'] ;
+            $data['confirmPass'] = $input['confirmPass'] ;
+            return BF::result(true, [ 'action' => 'ChangePass','data' => $data ]);
         }
     }
 
@@ -160,12 +161,13 @@ class AuthController extends Controller
 //                Auth::loginUsingId($userId);
 
                 $domain = $_SERVER['HTTP_HOST'];
-                $tomorrow = Carbon::now()->timestamp ;
+                $today = Carbon::today()->timestamp ;
+                $tomorrow = Carbon::tomorrow()->timestamp ;
                 $token = array(
                     "iss" => $domain,
                     "aud" => $domain,
-                    "iat" => $tomorrow,
-                    "nbf" => $tomorrow,
+                    "iat" => $today,
+                    "exp" => $tomorrow,
                     'name' => Auth::user()->name ,
                     'id' => $userId
                 );

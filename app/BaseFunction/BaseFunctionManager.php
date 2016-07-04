@@ -33,6 +33,9 @@ class BaseFunctionManager {
         JWT::$leeway = 60; // $leeway in seconds
         $decoded = JWT::decode($jwt, getenv('APP_KEY') , array('HS256'));
         $decoded = (array)$decoded ;
+
+
+
         return (array)$decoded['data'];
     }
 

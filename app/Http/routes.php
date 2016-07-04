@@ -25,7 +25,7 @@ Route::group(['prefix' => 'api', 'middleware' => []], function () {
 });
 
 //--- Route ที่มีการเช็ค auth user
-Route::group(['prefix' => 'api', 'middleware' => ['jwt.auth']], function () {
+Route::group(['prefix' => 'api', 'middleware' => ['jwt.auth','permission']], function () {
     Route::controller('auth', 'AuthController');
     Route::resource('user', 'UserController');
     Route::resource('branch', 'BranchController');
