@@ -18,18 +18,12 @@ class BaseFunctionManager {
             if($action) $res['action'] = $action;
             return $res;
         }
-        return ['status' => 'error', ['data' => ['error' => $message]]];
+        return ['status' => 'error', 'data' => ['error' => $message]];
     }
 
     public static function decodeInput($request) {
-
-        //$data = json_decode($request);
-        //print_r(['data->appKey'=>$data->appKey, 'getenv'=>getenv('APP_KEY')]);
-        //exit();
-      
 //        JWT::$leeway = 60; // $leeway in seconds
         $decoded = JWT::decode($request, getenv('APP_KEY'), array('HS256'));
-//        $decoded = JWT::decode($request->getContent(), getenv('APP_KEY') , array('HS256'));
         $decoded = (array)$decoded ;
         return (array)$decoded['payload'];
     }

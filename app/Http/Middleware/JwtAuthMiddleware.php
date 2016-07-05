@@ -24,8 +24,8 @@ class JwtAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $input = BF::decodeInput($request);
-        $user = JWT::decode($input['userToken'], getenv('APP_KEY') , array('HS256'));
+        $input = BF::decodeInput($request->getContent());
+        $user = JWT::decode($input['token'], getenv('APP_KEY') , array('HS256'));
         $dateExpire = $user->exp ;
         $dateNow = (int) Carbon::now()->timestamp ;
 

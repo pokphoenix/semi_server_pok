@@ -43,23 +43,19 @@ class PermissionMiddleware
         $last = array_pop($seg);
         if($request->isMethod('get')) {
             if(is_numeric($last)) {
-                $permName = "'$base.view'";
+                $permName = "$base.view";
             } else{
-                $permName = "'$base.$last'";
+                $permName = "$base.$last";
             }
         } else if($request->isMethod('post')) {
-            $permName = "'$base.create'";
+            $permName = "$base.create";
         } else if($request->isMethod('patch')) {
-            $permName = "'$base.edit'";
+            $permName = "$base.edit";
         } else if($request->isMethod('delete')) {
-            $permName = "'$base.edit'";
+            $permName = "$base.edit";
         }
-
         // check permission user
         try {
-
-            $permName = 'credits.edit' ;
-
             $permission = PermRole::join('permissions', 'perm_role.permission_id', '=', 'permissions.id')
                 ->select('perm_role.id')
                 ->where('perm_role.role_id', '=', $roleId)

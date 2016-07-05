@@ -10,8 +10,6 @@ use BF;
 use Validator;
 use Auth;
 use Session;
-use Tymon\JWTAuth\Exceptions\JWTException;
-use \Tymon\JWTAuth\Facades\JWTAuth as JWTAuth;
 use \Firebase\JWT\JWT;
 use Illuminate\Http\Request;
 

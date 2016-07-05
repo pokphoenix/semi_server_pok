@@ -9,7 +9,7 @@ class UserType extends Model {
     use Updater, SoftDeletes;
 
     protected $table = 'user_type';
-    public $timestamps = true;
+    public $timestamps = false;
     protected $dates = ['created_at', 'updated_at'];
 
     protected $fillable = array(

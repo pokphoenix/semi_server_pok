@@ -2,16 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests;
 
 use App\Models\Branch;
 use App\Models\Role;
 use App\Models\UserType;
 use App\User;
+use Illuminate\Http\Request;
 use Input;
 use BF;
 use Validator;
 use Auth;
+
+
 class UserController extends Controller
 {
     public function index()
@@ -28,10 +30,29 @@ class UserController extends Controller
         return BF::result(true, ['action' => 'create', 'data' => $data]);
     }
 
-    public function store()
+    public function store(Request  $request)
     {
-        $data = Input::all();
-        $auth = BF::authLoginFail($data);
+
+
+
+        $input = BF::decodeInput($request);
+        $rules = array(
+            'oldPass' => 'required|alphaNum|min:3',
+            'newPass' => 'required|alphaNum|min:3',
+            'confirmPass' => 'required|alphaNum|min:3',
+        );
+        $validator = Validator::make($input, $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        } else {
+            $data = [];
+            $data['oldPass'] = $input['oldPass'] ;
+            $data['newPass'] = $input['newPass'] ;
+            $data['confirmPass'] = $input['confirmPass'] ;
+            return BF::result(true, $data, 'ChangePass');
+        }
+
+
         if($auth) {
             return $auth ;
         }

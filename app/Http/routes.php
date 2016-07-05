@@ -27,23 +27,10 @@ Route::group(['prefix' => 'api', 'middleware' => []], function () {
 //--- Route ที่มีการเช็ค auth user
 Route::group(['prefix' => 'api', 'middleware' => ['jwt.auth','permission']], function () {
     Route::controller('auth', 'AuthController');
-    Route::resource('user', 'UserController');
+    Route::resource('users', 'UserController');
     Route::resource('branch', 'BranchController');
     Route::resource('permission', 'PermissionController');
     Route::resource('role', 'RoleController');
     Route::resource('usertype', 'UserTypeController');
 });
 
-Route::group(['prefix' => 'api', 'middleware' => []], function () {
-    Route::get('test', function(){
-        $token = [
-              "payload" => [
-                  'username' => 'admin' ,
-                  'password' => "admin1234",
-              ]
-        ];
-        $jwt = \Firebase\JWT\JWT::encode($token, getenv('APP_KEY'));
-        return $jwt ;
-    });
-
-});

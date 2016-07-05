@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\UserType;
 use Illuminate\Http\Request;
-
-use App\Http\Requests;
+use Validator;
 use Input;
 use BF;
 
@@ -19,23 +18,30 @@ class UserTypeController extends Controller
     {
     }
 
-    public function store()
+    public function store(Request $request)
     {
-        $data = Input::all();
-        $data = array_diff_key($data, array_flip(['id','_method','deleted_at','deleted_by','updated_at','created_at']));
-        //$data["created_by"] = Session::get('user_id');
+        $input = BF::decodeInput($request->getContent());
+        $rules = array(
+            'name' => 'required|min:3|max:50',
+        );
+        $validator = Validator::make($input, $rules);
+        if ($validator->fails()) {
+            return BF::result(false, $validator->messages()->first());
+        }
         try {
-            $status = UserType::create($data);
+            unset($input['token']);
+            $status = UserType::create($input);
             if($status === NULL) {
                 return BF::result(false, 'failed!');
             }
         } catch ( \Illuminate\Database\QueryException $e) {
             if($e->getCode() == 23000) {
-                return BF::result(false, "ชื่อซ้ำ: {$data['name']}");
+                return BF::result(false, "ชื่อซ้ำ: {$input['name']}");
             }
             return BF::result(false, $e->getMessage());
         }
-        return BF::result(true, ['action' => 'create', 'id' => $status->id]);
+        $data = [] ;
+        return BF::result(true, $data, 'usertype create');
     }
 
     public function show($id)
