@@ -17,6 +17,7 @@ class CreateUserTables extends Migration
             $table->string('phone_2', 20)->nullable();
             $table->string('password', 60);
             $table->integer('role_id')->unsigned();
+            $table->integer('user_type_id')->unsigned();
             $table->integer('branch_id')->unsigned();
             $table->string('lang', 2)->default('th');
             $table->rememberToken();
@@ -41,7 +42,6 @@ class CreateUserTables extends Migration
             $table->string('name', 50)->unique();
             $table->string('email', 100);
             $table->string('phone', 20);
-            $table->string('phone_2', 20);
             $table->string('fax', 20);
             $table->text('address');
             $table->text('desc');

@@ -21,7 +21,7 @@ Route::get('/', function () {
 
 //--- Route ที่ไม่มีการเช็ค auth user
 Route::group(['prefix' => 'api', 'middleware' => []], function () {
-    Route::post('login', 'AuthController@Login');
+    Route::post('auth', 'AuthController@Login');
 });
 
 //--- Route ที่มีการเช็ค auth user
@@ -32,4 +32,18 @@ Route::group(['prefix' => 'api', 'middleware' => ['jwt.auth','permission']], fun
     Route::resource('permission', 'PermissionController');
     Route::resource('role', 'RoleController');
     Route::resource('usertype', 'UserTypeController');
+});
+
+Route::group(['prefix' => 'api', 'middleware' => []], function () {
+    Route::get('test', function(){
+        $token = [
+              "payload" => [
+                  'username' => 'admin' ,
+                  'password' => "admin1234",
+              ]
+        ];
+        $jwt = \Firebase\JWT\JWT::encode($token, getenv('APP_KEY'));
+        return $jwt ;
+    });
+
 });

@@ -3,7 +3,7 @@
 use App\BaseFunction\BaseFunctionManager as BF;
 use Auth;
 use \Firebase\JWT\JWT;
-
+use \Illuminate\Http\Request ;
 
 class BaseFunctionManager {
 
@@ -12,31 +12,26 @@ class BaseFunctionManager {
         echo 'Do something!';
     }
 
-    public static function result($success = true, $message) {
+    public static function result($success = true, $message, $action = false) {
         if($success) {
-            return ['status' => 'success', 'datas' => $message];
+            $res = ['status' => 'success', 'data' => $message];
+            if($action) $res['action'] = $action;
+            return $res;
         }
-        return ['status' => 'error', 'message' => $message];
-    }
-
-    public static function authLoginFail($input) {
-        $userId = $input['userid'] ;
-        $auth = Auth::loginUsingId($userId);
-        if (!$auth){
-            return BF::result(false, "Error!! ไม่พบไอดีนี้ในระบบค่ะ!");
-        }
-        return false ;
+        return ['status' => 'error', ['data' => ['error' => $message]]];
     }
 
     public static function decodeInput($request) {
-        $jwt = $request->getContent() ;
-        JWT::$leeway = 60; // $leeway in seconds
-        $decoded = JWT::decode($jwt, getenv('APP_KEY') , array('HS256'));
+
+        //$data = json_decode($request);
+        //print_r(['data->appKey'=>$data->appKey, 'getenv'=>getenv('APP_KEY')]);
+        //exit();
+      
+//        JWT::$leeway = 60; // $leeway in seconds
+        $decoded = JWT::decode($request, getenv('APP_KEY'), array('HS256'));
+//        $decoded = JWT::decode($request->getContent(), getenv('APP_KEY') , array('HS256'));
         $decoded = (array)$decoded ;
-
-
-
-        return (array)$decoded['data'];
+        return (array)$decoded['payload'];
     }
 
 }

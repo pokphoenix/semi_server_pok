@@ -158,7 +158,7 @@ return [
         App\Providers\RouteServiceProvider::class,
 
         App\BaseFunction\BaseFunctionServiceProvider::class,
-        Tymon\JWTAuth\Providers\JWTAuthServiceProvider::class,
+        Orangehill\Iseed\IseedServiceProvider::class
         
     ],
 
