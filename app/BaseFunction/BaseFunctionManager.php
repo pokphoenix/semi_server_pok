@@ -23,7 +23,7 @@ class BaseFunctionManager {
 
     public static function decodeInput($request) {
 //        JWT::$leeway = 60; // $leeway in seconds
-        $decoded = JWT::decode($request, getenv('APP_KEY'), array('HS256'));
+        $decoded = JWT::decode($request, env('APP_KEY'), array('HS256'));
         $decoded = (array)$decoded ;
         return (array)$decoded['payload'];
     }
