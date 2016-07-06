@@ -28,17 +28,23 @@ class UserTypeController extends Controller
         if ($validator->fails()) {
             return BF::result(false, $validator->messages()->first());
         }
-        try {
-            unset($input['token']);
-            $status = UserType::create($input);
-            if($status === NULL) {
-                return BF::result(false, 'failed!');
+
+        $testApi = true ;
+        if($testApi){
+            //--- สำหรับเทส ไม่ต้องคอยลบข้อมูลเวลาทดสอบฝั่ง client
+        }else{
+            try {
+                unset($input['token']);
+                $status = UserType::create($input);
+                if($status === NULL) {
+                    return BF::result(false, 'failed!');
+                }
+            } catch ( \Illuminate\Database\QueryException $e) {
+                if($e->getCode() == 23000) {
+                    return BF::result(false, "ชื่อซ้ำ: {$input['name']}");
+                }
+                return BF::result(false, $e->getMessage());
             }
-        } catch ( \Illuminate\Database\QueryException $e) {
-            if($e->getCode() == 23000) {
-                return BF::result(false, "ชื่อซ้ำ: {$input['name']}");
-            }
-            return BF::result(false, $e->getMessage());
         }
         $data = [] ;
         return BF::result(true, $data, 'usertype create');
