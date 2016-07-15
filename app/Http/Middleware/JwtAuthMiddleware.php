@@ -24,14 +24,21 @@ class JwtAuthMiddleware
      */
     public function handle($request, Closure $next)
     {
-        $input = BF::decodeInput($request->getContent());
-        $user = JWT::decode($input['token'], getenv('APP_KEY') , array('HS256'));
+        $access_token = $request->header('Authorization');
+
+        try {
+            $user = JWT::decode($access_token, getenv('APP_KEY') , array('HS256'));
+        } catch ( \Firebase\JWT\ExpiredException $e) {
+            return response(BF::result(false, $e->getMessage()), 401);
+        }
+
+
         $dateExpire = $user->exp ;
         $dateNow = (int) Carbon::now()->timestamp ;
 
         // check token expire
         if ($dateNow > (int)$dateExpire) {
-            return response(BF::result(false, 'Token Expire.'), 401);
+            return response(BF::result(false, 'Expired token'), 401);
         }
 
         // check auth user

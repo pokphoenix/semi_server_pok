@@ -29,6 +29,10 @@ class RealSeeder extends Seeder
                 'id' => $id++,
                 'name' => $permArray[$i-1].".edit",
             ];
+            $permissions[] = [
+                'id' => $id++,
+                'name' => $permArray[$i-1].".delete",
+            ];
         }
         \DB::table('permissions')->delete();
         \DB::table('permissions')->insert($permissions);

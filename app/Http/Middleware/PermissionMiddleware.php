@@ -41,32 +41,53 @@ class PermissionMiddleware
             if(isset($seg[6])) $base2 = $seg[6];
         }
         $last = array_pop($seg);
+
+        $permName = "$base";
+
+        if (!empty($permName)){
+            // check permission user
+            try {
+                $permission = PermRole::join('permissions', 'perm_role.permission_id', '=', 'permissions.id')
+                    ->select('perm_role.id','permissions.name')
+                    ->where('perm_role.role_id', '=', $roleId)
+                    ->where('permissions.name', 'like','%' . $permName . '%' )
+                    ->get();
+                if(empty($permission)){
+                    return response(BF::result(false, 'permission denied.'), 403);
+                }
+                $setPerm = [];
+                foreach ($permission as $p){
+                    $setPerm[] = $p->name ;
+                }
+
+                Session::set('perm', $setPerm);
+
+            } catch ( \Illuminate\Database\QueryException $e) {
+                return response(BF::result(false, $e->getMessage()), 401);
+            }
+        }
+
+        $permSearch = "" ;
         if($request->isMethod('get')) {
             if(is_numeric($last)) {
-                $permName = "$base.view";
+                $permSearch = "$base.view";
             } else{
-                $permName = "$base.$last";
+                if($base!=$last){
+                    $permSearch = "$base.$last";
+                }
             }
         } else if($request->isMethod('post')) {
-            $permName = "$base.create";
+            $permSearch = "$base.create";
         } else if($request->isMethod('patch')) {
-            $permName = "$base.edit";
+            $permSearch = "$base.edit";
         } else if($request->isMethod('delete')) {
-            $permName = "$base.edit";
+            $permSearch = "$base.edit";
         }
-        // check permission user
-        try {
-            $permission = PermRole::join('permissions', 'perm_role.permission_id', '=', 'permissions.id')
-                ->select('perm_role.id')
-                ->where('perm_role.role_id', '=', $roleId)
-                ->where('permissions.name', '=', $permName)
-                ->first();
-            if(empty($permission)){
-                return response(BF::result(false, 'permission denied.'), 403);
-            }
-        } catch ( \Illuminate\Database\QueryException $e) {
-            return response(BF::result(false, $e->getMessage()), 401);
+        
+        if (!empty($permSearch) && (!in_array($permSearch, $setPerm)) ){
+            return response(BF::result(false, 'permission denied.'), 403);
         }
+
         return $next($request);
     }
 }
